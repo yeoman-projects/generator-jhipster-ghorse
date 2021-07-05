@@ -1,0 +1,10 @@
+{
+  "generator-jhipster-blueprint": {
+    "promptValues": {
+      "githubName": "fn-alves",
+      "authorName": "Fernando Alves",
+      "authorEmail": "fehraraujo@gmail.com",
+      "authorUrl": ""
+    }
+  }
+}
