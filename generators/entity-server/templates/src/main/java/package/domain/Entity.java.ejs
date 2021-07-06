@@ -104,7 +104,6 @@ import javax.validation.constraints.*;
 <%_ if (searchEngineElasticsearch) { _%>
 import org.springframework.data.elasticsearch.annotations.FieldType;
 <%_ } _%>
-import lombok.*;
 import java.io.Serializable;
 <%_ if (fieldsContainBigDecimal) { _%>
 import java.math.BigDecimal;
@@ -147,11 +146,6 @@ import static org.springframework.data.couchbase.core.mapping.id.GenerationStrat
 @ApiModel(description = "<%- formatAsApiDescription(javadoc) %>")
   <%_ } _%>
 <%_ } _%>
-@Data
-@Builder
-@AllArgsConstructor(access = AccessLevel.PROTECTED)
-@NoArgsConstructor
-@EqualsAndHashCode(of = {"<%= primaryKey.name %>"}, callSuper = false)
 <%_ if (databaseTypeSql) { _%>
   <%_ if (reactive) { _%>
 @Table("<%= entityTableName %>")
@@ -330,7 +324,6 @@ public class <%= persistClass %> implements Serializable {
       <%_ } _%>
     @Field("<%= relationshipFieldName %>")
       <%_ if (databaseTypeCouchbase && !otherEntityIsEmbedded) { _%>
-    @Builder.Default
     private Set<String> <%= relationshipFieldName %>Ids = new HashSet<>();
 
     @N1qlJoin(on = "lks.<%= relationshipFieldName %>=meta(rks).id", fetchType = FetchType.IMMEDIATE)
@@ -347,7 +340,6 @@ public class <%= persistClass %> implements Serializable {
         <%_ }); _%>
     }, allowSetters = true)
     <%_ } _%>
-    @Builder.Default
     private Set<<%= asEntity(otherEntityNameCapitalized) %>> <%= relationshipFieldNamePlural %> = new HashSet<>();
 
   <%_ } else if (relationship.relationshipManyToOne) {
@@ -417,7 +409,6 @@ public class <%= persistClass %> implements Serializable {
       <%_ } _%>
     @Field("<%= relationshipFieldNamePlural %>")
       <%_ if (databaseTypeCouchbase) { _%>
-    @Builder.Default
     private Set<String> <%= relationshipFieldName %>Ids = new HashSet<>();
 
     @N1qlJoin(on = "lks.<%= relationshipFieldNamePlural %>=meta(rks).id", fetchType = FetchType.IMMEDIATE)
@@ -437,7 +428,6 @@ public class <%= persistClass %> implements Serializable {
     <%_ if (databaseTypeSql && reactive) { _%>
     @Transient
     <%_ } _%>
-    @Builder.Default
     private Set<<%= asEntity(otherEntityNameCapitalized) %>> <%= relationshipFieldNamePlural %> = new HashSet<>();
 
   <%_ } else {
@@ -487,25 +477,74 @@ public class <%= persistClass %> implements Serializable {
   <%_ } _%>
 <%_ }); _%>
     // jhipster-needle-entity-add-field - JHipster will add fields here
+<%_ if (!embedded) { _%>
+    public <%= primaryKey.type %> get<%= primaryKey.nameCapitalized %>() {
+        return <%= primaryKey.name %>;
+    }
 
+    public void set<%= primaryKey.nameCapitalized %>(<%= primaryKey.type %> <%= primaryKey.name %>) {
+        this.<%= primaryKey.name %> = <%= primaryKey.name %>;
+    }
+
+  <%_ if (fluentMethods) { _%>
+    public <%= persistClass %> <%= primaryKey.name %>(<%= primaryKey.type %> <%= primaryKey.name %>) {
+        this.<%= primaryKey.name %> = <%= primaryKey.name %>;
+        return this;
+    }
+  <%_ } _%>
+<%_ } _%>
 <%_ for (const field of fields.filter(field => !field.id && !field.transient)) {
+  const fieldType = field.fieldType;
   const fieldName = field.fieldName;
   const fieldInJavaBeanMethod = field.fieldInJavaBeanMethod; _%>
 
-  <%_ if (field.blobContentTypeText) { _%>
+  <%_ if (!field.blobContentTypeText) { _%>
+    public <%= fieldType %> get<%= fieldInJavaBeanMethod %>() {
+  <%_ } else { _%>
     public String get<%= fieldInJavaBeanMethod %>() {
+  <%_ } _%>
         return this.<%= fieldName %>;
     }
+  <%_ if (fluentMethods) { _%>
 
-    public void set<%= fieldInJavaBeanMethod %>(String <%= fieldName %>) {
+    <%_ if (!field.blobContentTypeText) { _%>
+    public <%= persistClass %> <%= fieldName %>(<%= fieldType %> <%= fieldName %>) {
+    <%_ } else { _%>
+    public <%= persistClass %> <%= fieldName %>(String <%= fieldName %>) {
+    <%_ } _%>
+    <%_ if (field.fieldTypeBigDecimal && databaseTypeSql && reactive) { _%>
+        this.<%= fieldName %> = <%= fieldName %> != null ? <%= fieldName %>.stripTrailingZeros() : null;
+    <%_ } else { _%>
         this.<%= fieldName %> = <%= fieldName %>;
+    <%_ } _%>
+        return this;
     }
   <%_ } _%>
 
+  <%_ if (!field.blobContentTypeText) { _%>
+    public void set<%= fieldInJavaBeanMethod %>(<%= fieldType %> <%= fieldName %>) {
+  <%_ } else { _%>
+    public void set<%= fieldInJavaBeanMethod %>(String <%= fieldName %>) {
+  <%_ } _%>
+  <%_ if (field.fieldTypeBigDecimal && databaseTypeSql && reactive) { _%>
+        this.<%= fieldName %> = <%= fieldName %> != null ? <%= fieldName %>.stripTrailingZeros() : null;
+  <%_ } else { _%>
+        this.<%= fieldName %> = <%= fieldName %>;
+  <%_ } _%>
+    }
   <%_ if (field.fieldWithContentType) { _%>
+
     public String get<%= fieldInJavaBeanMethod %>ContentType() {
         return this.<%= fieldName %>ContentType;
     }
+    <%_ if (fluentMethods) { _%>
+
+    public <%= persistClass %> <%= fieldName %>ContentType(String <%= fieldName %>ContentType) {
+        this.<%= fieldName %>ContentType = <%= fieldName %>ContentType;
+        return this;
+    }
+    <%_ } _%>
+
     public void set<%= fieldInJavaBeanMethod %>ContentType(String <%= fieldName %>ContentType) {
         this.<%= fieldName %>ContentType = <%= fieldName %>ContentType;
     }
@@ -667,4 +706,59 @@ _%>
   <%_ } _%>
 <%_ } _%>
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof <%= persistClass %>)) {
+            return false;
+        }
+<%_ if (!embedded) { _%>
+        return <%= primaryKey.name %> != null && <%= primaryKey.name %>.equals(((<%= persistClass %>) o).<%= primaryKey.name %>);
+<%_ } else { _%>
+        return false;
+<%_ } _%>
+    }
+
+    @Override
+    public int hashCode() {
+        // see https://vladmihalcea.com/how-to-implement-equals-and-hashcode-using-the-jpa-entity-identifier/
+        return getClass().hashCode();
+    }
+
+    // prettier-ignore
+    @Override
+    public String toString() {
+        return "<%= persistClass %>{" +
+<%_ if (!embedded) { _%>
+            "<%= primaryKey.name %>=" + get<%= primaryKey.nameCapitalized %>() +
+<%_ } _%>
+<%_ for (const field of fields.filter(field => !field.id && !field.transient)) {
+  const fieldName = field.fieldName;
+  const fieldInJavaBeanMethod = field.fieldInJavaBeanMethod;
+  const isNumeric = field.fieldTypeNumeric; _%>
+            ", <%= fieldName %>=<% if (! isNumeric) { %>'<% } %>" + get<%= fieldInJavaBeanMethod %>() <% if (! isNumeric) { %>+ "'" <% } %>+
+  <%_ if (field.fieldWithContentType) { _%>
+            ", <%= fieldName %>ContentType='" + get<%= fieldInJavaBeanMethod %>ContentType() + "'" +
+  <%_ } _%>
+<%_ } _%>
+<%_ for (const relationship of relationships) {
+  const otherEntityIsEmbedded = relationship.otherEntityIsEmbedded;
+  const relationshipFieldName = relationship.relationshipFieldName;
+  const relationshipNameCapitalized = relationship.relationshipNameCapitalized;
+  const relationshipFieldNamePlural = relationship.relationshipFieldNamePlural;
+  const relationshipNameCapitalizedPlural = relationship.relationshipNameCapitalizedPlural;
+  const ownerSide = relationship.ownerSide; _%>
+  <%_ if (otherEntityIsEmbedded) {
+    if (relationship.relationshipManyToOne) { _%>
+            ", <%= relationshipFieldNamePlural %>='" + get<%= relationshipNameCapitalizedPlural %>() + "'" +
+    <%_ } else if (relationship.relationshipOneToOne && ownerSide) { _%>
+            ", <%= relationshipFieldName %>='" + get<%= relationshipNameCapitalized %>() + "'" +
+    <%_ } _%>
+  <%_ } _%>
+<%_ } _%>
+            "}";
+    }
 }
