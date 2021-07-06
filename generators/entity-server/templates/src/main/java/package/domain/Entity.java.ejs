@@ -121,7 +121,6 @@ import java.time.Duration;
 <%_ } if (entityContainsCollectionField) { _%>
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Collections;
 <%_ } if (databaseTypeCouchbase && hasRelationship) { _%>
 import java.util.stream.Collectors;
 <%_ } _%>
@@ -502,6 +501,15 @@ public class <%= persistClass %> implements Serializable {
         this.<%= fieldName %> = <%= fieldName %>;
     }
   <%_ } _%>
+
+  <%_ if (field.fieldWithContentType) { _%>
+    public String get<%= fieldInJavaBeanMethod %>ContentType() {
+        return this.<%= fieldName %>ContentType;
+    }
+    public void set<%= fieldInJavaBeanMethod %>ContentType(String <%= fieldName %>ContentType) {
+        this.<%= fieldName %>ContentType = <%= fieldName %>ContentType;
+    }
+  <%_ } _%>
 <%_ } _%>
 <%_
 for (const relationship of relationships) {
@@ -529,7 +537,18 @@ _%>
   <%_ if (relationship.relationshipOneToMany || relationship.relationshipManyToMany) { _%>
 
     public Set<<%= asEntity(otherEntityNameCapitalized) %>> get<%= relationshipNameCapitalizedPlural %>() {
-        return Collections.unmodifiableSet(this.<%= relationshipFieldNamePlural %>);
+        return this.<%= relationshipFieldNamePlural %>;
+    }
+    <%_ if (fluentMethods) { _%>
+
+    public <%= persistClass %> <%= relationshipFieldNamePlural %>(Set<<%= asEntity(otherEntityNameCapitalized) %>> <%= otherEntityNamePlural %>) {
+        this.set<%= relationshipNameCapitalizedPlural %>(<%= otherEntityNamePlural %>);
+      <%_ if (databaseTypeCouchbase && !otherEntityIsEmbedded) { _%>
+        this.<%= relationshipFieldName %>Ids = <%= otherEntityNamePlural %>.stream()
+            .map(<%= asEntity(otherEntityNameCapitalized) %>::getId)
+            .collect(Collectors.toSet());
+      <%_ } _%>
+        return this;
     }
 
     public <%= persistClass %> add<%= relationshipNameCapitalized %>(<%= asEntity(otherEntityNameCapitalized) %> <%= otherEntityName %>) {
@@ -571,6 +590,7 @@ _%>
       <%_ } _%>
         return this;
     }
+    <%_ } _%>
 
     public void set<%= relationshipNameCapitalizedPlural %>(Set<<%= asEntity(otherEntityNameCapitalized) %>> <%= otherEntityNamePlural %>) {
     <%_ if (relationship.otherRelationship && !relationship.reference.owned) { _%>
@@ -597,6 +617,20 @@ _%>
     <%_ } _%>
     }
   <%_ } else { _%>
+
+    public <%= asEntity(otherEntityNameCapitalized) %> get<%= relationshipNameCapitalized %>() {
+        return this.<%= relationshipFieldName %>;
+    }
+    <%_ if (fluentMethods) { _%>
+
+    public <%= persistClass %> <%= relationshipFieldName %>(<%= asEntity(otherEntityNameCapitalized) %> <%= otherEntityName %>) {
+        this.set<%= relationshipNameCapitalized %>(<%= otherEntityName %>);
+      <%_ if ((databaseTypeCouchbase && !otherEntityIsEmbedded) || reactiveRelationshipWithId) { _%>
+        this.<%= relationshipFieldName %>Id = <%= otherEntityName %> != null ? <%= otherEntityName %>.get<%= relationship.otherEntity.primaryKey.nameCapitalized %>() : null;
+      <%_ } _%>
+        return this;
+    }
+    <%_ } _%>
 
     public void set<%= relationshipNameCapitalized %>(<%= asEntity(otherEntityNameCapitalized) %> <%= otherEntityName %>) {
     <%_ if (relationship.otherRelationship && !relationship.reference.owned) { _%>
@@ -632,6 +666,5 @@ _%>
     <%_ } _%>
   <%_ } _%>
 <%_ } _%>
-
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here
 }
