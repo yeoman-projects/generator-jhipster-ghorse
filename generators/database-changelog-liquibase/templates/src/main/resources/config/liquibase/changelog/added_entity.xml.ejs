@@ -35,11 +35,11 @@
                 <constraints primaryKey="true" nullable="false"/>
     <%_ } else { _%>
             <column name="<%= field.columnName %>" type="<%= field.columnType %>"<%- formatAsLiquibaseRemarks(field.javadoc, true) %>>
-    <%_ } _%>
-    <%_ if (field.unique) { _%>
+        <%_ if (field.unique) { _%>
                 <constraints nullable="<%= field.nullable %>" unique="true" uniqueConstraintName="<%= field.uniqueConstraintName %>" />
-    <%_ } else { _%>
+        <%_ } else { _%>
                 <constraints nullable="<%= field.nullable %>" />
+        <%_ } _%>
     <%_ } _%>
             </column>
     <%_ if (field.shouldCreateContentType) { _%>

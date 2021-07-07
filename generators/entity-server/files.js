@@ -86,11 +86,9 @@ function writeFiles() {
     this.writeFilesToDisk(customServerFiles, this, false);
 
     if (this.databaseType === 'sql') {
-        if (!this.skipDbChangelog) {
-            if (this.fieldsContainOwnerManyToMany || this.fieldsContainOwnerOneToOne || this.fieldsContainManyToOne) {
-                this.addConstraintsChangelogToLiquibase(`${this.changelogDate}_added_entity_constraints_${this.entityClass}_aud`);
-            }
-            this.addChangelogToLiquibase(`${this.changelogDate}_added_entity_${this.entityClass}_aud`);
+        if (this.fieldsContainOwnerManyToMany || this.fieldsContainOwnerOneToOne || this.fieldsContainManyToOne) {
+            this.addConstraintsChangelogToLiquibase(`${this.changelogDate}_added_entity_constraints_${this.entityClass}_aud`);
         }
+        this.addChangelogToLiquibase(`${this.changelogDate}_added_entity_${this.entityClass}_aud`);
     }
 }
