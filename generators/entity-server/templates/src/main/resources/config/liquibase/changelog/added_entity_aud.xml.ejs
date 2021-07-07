@@ -50,7 +50,7 @@
         <%_ } else { _%>
         <createTable tableName="<%= entityTableNameAudit %>" remarks="<%- formatAsLiquibaseRemarks(javadoc) %>">
         <%_ } _%>
-            <column name="id" type="serial" <%_ if (primaryKeyType === 'String' ) { _%> <% } else { %><%_ } %>>
+            <column name="id" type="bigint" <%_ if (primaryKeyType === 'String' ) { _%> <% } else { %><%_ } %>>
                 <constraints nullable="false"/>
             </column>
             <%_ for (idx in fields) {
