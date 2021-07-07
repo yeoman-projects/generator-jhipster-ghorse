@@ -53,7 +53,7 @@
             <column name="id" type="serial" <%_ if (primaryKeyType === 'String' ) { _%> <% } else { %><%_ } %>>
                 <constraints nullable="false"/>
             </column>
-            <%_ for (idx in fields.filter(field => !field.id)) {
+            <%_ for (idx in fields) {
                 let nullable = true;
                 let maxlength = 255;
                 if (fields[idx].fieldValidate === true && fields[idx].fieldValidateRules.includes('maxlength')) {
@@ -97,13 +97,15 @@
                     columnType="boolean";
                 }
                 _%>
-                <%_ if (typeof fields[idx].javadoc == 'undefined') { _%>
+                <%_ if (columnName !== 'id') { _%>
+                  <%_ if (typeof fields[idx].javadoc == 'undefined') { _%>
             <column name="<%= columnName %>" type="<%= columnType %>">
-                <%_ } else { _%>
+                  <%_ } else { _%>
             <column name="<%= columnName %>" type="<%= columnType %>" remarks="<%- formatAsLiquibaseRemarks(fields[idx].javadoc) %>">
-                <%_ } _%>
+                  <%_ } _%>
                 <constraints nullable="<%= nullable %>" />
             </column>
+                <%_ } _%>
                 <%_ if (fieldType === 'byte[]' && fieldTypeBlobContent !== 'text') {
                     let contentTypeColumnType = columnType;
                     contentTypeColumnType = "varchar(255)"; _%>
